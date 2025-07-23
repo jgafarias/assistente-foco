@@ -1,4 +1,5 @@
 import flet as ft
+from events.cronometro import start_timer, pause_timer, restart_timer
 
 def interface(page: ft.Page):
     page.title = 'Assistente de foco'
@@ -35,8 +36,15 @@ def interface(page: ft.Page):
         actions=[],
     )
 
+    dlg = ft.AlertDialog(
+        title=ft.Text("Erro!"),
+        content=ft.Text("Programa bloqueado! Para remover o bloqueio, acesse a aba 'Apps' e remova o programa."),
+        alignment=ft.alignment.center,
+        title_padding=ft.padding.all(25),
+    )
+    
     # Componentes
-    pause_icon = ft.Icon(name=ft.Icons.PAUSE, size=100, color=ft.Colors.WHITE, visible=False)
+    pause_icon = ft.Icon(name=ft.Icons.PAUSE, size=115, color=ft.Colors.WHITE, visible=False)
     
     cron = ft.Text(value='00:00', size=115, color=ft.Colors.BLUE_200, text_align=ft.TextAlign.CENTER, weight=ft.FontWeight.BOLD)
 
@@ -49,6 +57,10 @@ def interface(page: ft.Page):
         color=ft.Colors.BLUE_200,
         border_color=ft.Colors.with_opacity(0.1, ft.Colors.WHITE),
         bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.CYAN_ACCENT_700),
+        input_filter=ft.InputFilter(
+            replacement_string='', 
+            regex_string=r'^\d*$',
+        )
     )
 
     start_button = ft.ElevatedButton(
@@ -57,7 +69,10 @@ def interface(page: ft.Page):
         width=100,
         height=40,
         color=ft.Colors.BLACK,
-        icon=ft.Icons.ACCESS_TIME,
+        icon=ft.Icons.PLAY_ARROW,
+        on_click=lambda e: start_timer(
+            e, page, min_input, cron, start_button, pause_button, pause_icon, restart_button
+        ),
         style=ft.ButtonStyle(
             shape=ft.RoundedRectangleBorder(radius=10)
         )
@@ -65,22 +80,34 @@ def interface(page: ft.Page):
 
     pause_button = ft.ElevatedButton(
         'Pausar',
-        width=200,
-        height=45,
-        bgcolor=ft.Colors.GREEN,
+        width=100,
+        height=40,
+        bgcolor=ft.Colors.ORANGE,
         color=ft.Colors.BLACK,
         icon=ft.Icons.PAUSE,
-        visible=False
+        visible=False,
+        on_click=lambda e: pause_timer(
+            e, page, cron, pause_icon, start_button, pause_button, restart_button
+        ),
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=10)
+        )
     )
 
     restart_button = ft.ElevatedButton(
         'Reiniciar',
-        width=200,
-        height=45,
+        width=100,
+        height=40,
         bgcolor=ft.Colors.RED,
         color=ft.Colors.WHITE,
         icon=ft.Icons.REFRESH,
-        visible=False
+        visible=False,
+        on_click=lambda e: restart_timer(
+            e, page, min_input, cron, start_button, pause_button, restart_button, pause_icon
+        ),
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=10)
+        )
     )
 
     # Layout com espaçamentos
@@ -88,12 +115,12 @@ def interface(page: ft.Page):
         ft.Column(
             controls=[
                 pause_icon,
+                ft.Container(height=20),
                 cron,
                 min_input,
                 ft.Container(height=10),
                 start_button,
                 pause_button,
-                ft.Container(height=20),
                 restart_button,
             ],
             alignment=ft.MainAxisAlignment.CENTER,
