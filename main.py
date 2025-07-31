@@ -1,10 +1,11 @@
 import flet as ft
+import asyncio
 # Paginas
 from screens.cronometro import cronometro_view
 from screens.sobre import sobre_view
 from screens.apps import apps_view
-# Load
-from screens.load import show_loading_then
+# loading view
+from screens.load import LoadingScreen
 
 def main(page: ft.Page):
     # Dados da página inicial
@@ -12,13 +13,34 @@ def main(page: ft.Page):
     page.window.width = 800
     page.window.resizable = False
     page.window.center()
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    
-    # Definir o tema da página
     page.theme_mode = ft.ThemeMode.DARK
+    page.padding = 0
 
-    # Função para construir o menu com destaque no selecionado
+    # Controles principais da aplicação
+    loading_screen = LoadingScreen()
+    
+    # Instanciamos as views uma única vez
+    cronometro_page = cronometro_view(page)
+    sobre_page = sobre_view(page)
+    apps_page = apps_view(page)
+
+    # Layout com Stack para sobrepor o loading e as views
+    main_stack = ft.Stack(
+        [
+            cronometro_page,
+            sobre_page,
+            apps_page,
+            loading_screen,
+        ],
+        expand=True
+    )
+    
+    # Todos os controles são invisíveis no início, exceto o cronometro_page
+    cronometro_page.visible = True
+    sobre_page.visible = False
+    apps_page.visible = False
+    loading_screen.visible = False
+
     def build_menu():
         return ft.BottomAppBar(
             ft.Row(
@@ -45,28 +67,43 @@ def main(page: ft.Page):
                 alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             )
         )
+        
+    async def route_change(e):
+        # Esconde todas as páginas e o loading para começar
+        cronometro_page.visible = False
+        sobre_page.visible = False
+        apps_page.visible = False
+        loading_screen.visible = False
 
-    def route_change(e):
-        page.controls.clear()
-        menu = build_menu()  # Atualiza as cores do menu conforme a rota
-
-        if page.route == "/sobre":
-            page.title = "Sobre o Assistente de Foco"
-            page.controls.append(sobre_view(page))
-            page.controls.append(menu)
-        elif page.route == "/apps":
+        if page.route == "/apps":
             page.title = "Gerenciar Apps Bloqueados"
-            show_loading_then(page, apps_view, menu)
-        else:
+            # 1. Exibe o loading
+            loading_screen.show()
+            page.update()
+            
+            await asyncio.sleep(2) # Substitua por sua função assíncrona real
+
+            # 3. Esconde o loading e mostra a página
+            loading_screen.hide()
+            apps_page.visible = True
+            page.update()
+            
+        elif page.route == "/sobre":
+            page.title = "Sobre o Assistente de Foco"
+            sobre_page.visible = True
+            page.update()
+            
+        else: # Rota "/"
             page.title = "Assistente de Foco"
-            page.controls.append(cronometro_view(page))
-            page.controls.append(menu)
+            cronometro_page.visible = True
+            page.update()
 
-
-        page.controls.append(ft.Container(height=10))
+        # Atualiza o menu e a página
+        page.bottom_appbar = build_menu()
         page.update()
 
+    page.add(main_stack, build_menu())
     page.on_route_change = route_change
-    route_change(None)  # Inicialização
+    page.go("/")
 
 ft.app(target=main)
