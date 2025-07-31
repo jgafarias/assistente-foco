@@ -3,7 +3,6 @@ import flet as ft
 def sobre_view(page: ft.Page):
 
     page.assets_dir = "assets"
-    page.route = "/sobre"
     
     return ft.Column(
         [

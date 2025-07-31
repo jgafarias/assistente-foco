@@ -26,6 +26,21 @@ def cronometro_view(page: ft.Page):
             overlay_color=ft.Colors.RED,
         )
     )
+    
+    restart_button = ft.ElevatedButton(
+        "Reiniciar",
+        icon=ft.Icons.REPLAY,
+        visible=False,
+        width=200,
+        height=50,
+        bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.BLUE),
+        color=ft.Colors.WHITE,
+        style=ft.ButtonStyle(
+            shape=ft.RoundedRectangleBorder(radius=10),
+            overlay_color=ft.Colors.BLUE,
+        )
+    )
+    
     start_button = ft.ElevatedButton(
         icon=ft.Icons.PLAY_ARROW,
         text="Iniciar",
@@ -80,9 +95,25 @@ def cronometro_view(page: ft.Page):
         timer_running = False
         start_button.text = "Continuar"  # Troca o texto para "Continuar"
         start_button.visible = True
+        restart_button.visible = True
         stop_button.visible = False
         page.update()
 
+
+    def restart_timer(e):
+        nonlocal timer_running
+        timer_running = False
+        tempo_restante[0] = 0
+        cron.value = "00:00"
+        min_input.value = ""
+        start_button.text = "Iniciar"
+        start_button.visible = True
+        stop_button.visible = False
+        restart_button.visible = False
+        page.update()
+        
+        
+    restart_button.on_click = restart_timer
     start_button.on_click = start_timer
     stop_button.on_click = stop_timer
 
@@ -91,7 +122,7 @@ def cronometro_view(page: ft.Page):
             cron,
             min_input,
             ft.Row(
-                [start_button, stop_button],
+                [start_button, stop_button, restart_button],
                 alignment=ft.MainAxisAlignment.CENTER
             )
         ],
